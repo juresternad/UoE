@@ -1,0 +1,21 @@
+version: "2.4"
+services:
+  vote:
+    build: ./imageApp
+    image: 2022-sp-image
+    ports: 
+      - "8080:80"
+    networks:
+      app_net:
+        ipv4_address: 172.16.238.10
+
+networks:
+  app_net:
+    driver: bridge
+    enable_ipv6: false
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.238.0/24
+          gateway: 172.16.238.1
+
