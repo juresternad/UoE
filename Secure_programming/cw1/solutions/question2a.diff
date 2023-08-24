@@ -1,0 +1,14 @@
+*** vulnerable.c	2022-10-07 14:55:24.000000000 +0000
+--- vulnerablefix.c	2022-11-25 00:00:16.553921205 +0000
+***************
+*** 17,25 ****
+  	char* user_args = malloc(size);
+  	for (to = user_args, av = ConvArgv + 1; (from = *av); av++) {
+  	    while (*from) {
+- 	        if (from[0] == '\\' && !isspace((unsigned char)from[1])) {
+- 	            from++;
+-                 }
+  		*to++ = *from++;
+              }
+  	    *to++ = ' ';
+--- 17,22 ----

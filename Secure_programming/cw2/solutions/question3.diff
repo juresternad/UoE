@@ -1,0 +1,171 @@
+diff -cr imageApp.orig/php.ini imageApp/php.ini
+*** imageApp.orig/php.ini	2022-11-04 12:29:54.000000000 +0000
+--- imageApp/php.ini	2022-11-23 19:01:39.587795662 +0000
+***************
+*** 361,367 ****
+  ; threat in any way, but it makes it possible to determine whether you use PHP
+  ; on your server or not.
+  ; http://php.net/expose-php
+! expose_php = On
+  
+  ;;;;;;;;;;;;;;;;;;;
+  ; Resource Limits ;
+--- 361,367 ----
+  ; threat in any way, but it makes it possible to determine whether you use PHP
+  ; on your server or not.
+  ; http://php.net/expose-php
+! expose_php = Off
+  
+  ;;;;;;;;;;;;;;;;;;;
+  ; Resource Limits ;
+***************
+*** 464,470 ****
+  ; Development Value: On
+  ; Production Value: Off
+  ; http://php.net/display-errors
+! display_errors = On
+  
+  ; The display of errors which occur during PHP's startup sequence are handled
+  ; separately from display_errors. PHP's default behavior is to suppress those
+--- 464,470 ----
+  ; Development Value: On
+  ; Production Value: Off
+  ; http://php.net/display-errors
+! display_errors = Off
+  
+  ; The display of errors which occur during PHP's startup sequence are handled
+  ; separately from display_errors. PHP's default behavior is to suppress those
+***************
+*** 819,829 ****
+  
+  ; Whether to allow the treatment of URLs (like http:// or ftp://) as files.
+  ; http://php.net/allow-url-fopen
+! allow_url_fopen = On
+  
+  ; Whether to allow include/require to open URLs (like http:// or ftp://) as files.
+  ; http://php.net/allow-url-include
+! allow_url_include = On
+  
+  ; Define the anonymous ftp password (your email address). PHP's default setting
+  ; for this is empty.
+--- 819,829 ----
+  
+  ; Whether to allow the treatment of URLs (like http:// or ftp://) as files.
+  ; http://php.net/allow-url-fopen
+! allow_url_fopen = Off
+  
+  ; Whether to allow include/require to open URLs (like http:// or ftp://) as files.
+  ; http://php.net/allow-url-include
+! allow_url_include = Off
+  
+  ; Define the anonymous ftp password (your email address). PHP's default setting
+  ; for this is empty.
+diff -cr imageApp.orig/srv/http/include/functions.php imageApp/srv/http/include/functions.php
+*** imageApp.orig/srv/http/include/functions.php	2022-11-03 18:05:30.000000000 +0000
+--- imageApp/srv/http/include/functions.php	2022-11-25 03:03:53.122197570 +0000
+***************
+*** 1,5 ****
+! <?php
+! header("X-XSS-Protection: 0"); // ;-)
+  
+  $FILE_DIREC = "image/";
+  $BANNED = array("html", "php", "js");
+--- 1,6 ----
+! <?php 
+! header("Content-Security-Policy: script-src 'self'"); // ;-)
+! 
+  
+  $FILE_DIREC = "image/";
+  $BANNED = array("html", "php", "js");
+***************
+*** 227,233 ****
+  {
+      $path = $GLOBALS["FILE_DIREC"] . $user . "/";
+      mkdir($path);
+!     $full = $path . $filename;
+      return $full;
+  }
+  
+--- 228,234 ----
+  {
+      $path = $GLOBALS["FILE_DIREC"] . $user . "/";
+      mkdir($path);
+!     $full = $path . image; // store the file without the extension
+      return $full;
+  }
+  
+***************
+*** 236,260 ****
+  {
+      try
+      {
+-      	$db = get_db();
+-         
+-         if (check_uniqueness($db, $user))
+-         {
+-             $post = $db->prepare("INSERT INTO image VALUES(:link, :user)");
+-         }
+-         else
+-         {
+-             $post = $db->prepare("UPDATE image SET link=:link WHERE user=:user");
+-         }
+          $info = pathinfo($link);
+!         $filename = generate_filename($user, $info["filename"], $info["extension"]);
+!         $data = file_get_contents_curl($link);
+!         file_put_contents($filename, $data);   
+!         $type = mime_content_type($filename); // check magic bytes!
+!         if (strpos($type, 'image') !== false && !in_array($info["extension"], $GLOBALS["BANNED"])) {
+!             $post->bindParam(':link', $filename);
+!             $post->bindParam(':user', $user);
+!             $post->execute();
+          } else {
+              print("<p>Invalid Image!</p>");
+          }
+--- 237,262 ----
+  {
+      try
+      {
+          $info = pathinfo($link);
+!         if (!in_array($info["extension"], $GLOBALS["BANNED"])) {
+!             $filename = generate_filename($user, $info["filename"], $info["extension"]);
+!             $data = file_get_contents_curl($link); 
+!             file_put_contents($filename, $data);  
+!             $type = mime_content_type($filename); // check magic bytes!
+!             if (strpos($type, 'image') !== false){
+!                 $db = get_db();
+!                 if (check_uniqueness($db, $user))
+!                 {
+!                     $post = $db->prepare("INSERT INTO image VALUES(:link, :user)");
+!                 }
+!                 else
+!                 {
+!                     $post = $db->prepare("UPDATE image SET link=:link WHERE user=:user");
+!                 }
+!                 $post->bindParam(':link', $filename);
+!                 $post->bindParam(':user', $user);
+!                 $post->execute();
+!             }
+          } else {
+              print("<p>Invalid Image!</p>");
+          }
+diff -cr imageApp.orig/srv/http/index.php imageApp/srv/http/index.php
+*** imageApp.orig/srv/http/index.php	2022-11-04 14:28:47.000000000 +0000
+--- imageApp/srv/http/index.php	2022-11-25 03:13:13.781032839 +0000
+***************
+*** 44,50 ****
+          {
+            $username = $_POST['username'];
+            $password = $_POST['password'];
+!           $signature = $_POST['signature'];
+  
+            if (isset($_POST['login']))
+            {
+--- 44,51 ----
+          {
+            $username = $_POST['username'];
+            $password = $_POST['password'];
+!           $unsanitizedsignature = $_POST['signature'];
+!           $signature = preg_replace("/[^a-zA-Z0-9]+/", "", $unsanitizedsignature);
+  
+            if (isset($_POST['login']))
+            {

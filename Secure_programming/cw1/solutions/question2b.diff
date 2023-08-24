@@ -1,0 +1,21 @@
+*** vulnerable2.c	2022-11-24 19:15:23.518042566 +0000
+--- vulnerable2fix.c	2022-11-24 19:15:26.114259430 +0000
+***************
+*** 67,74 ****
+  	do {
+  		sa->Width = tuples[tup].fst;
+  		sa->Height = tuples[tup].snd;
+! 		if (sa->Width < 0 || sa->Height < 0) {
+! 			printf("The Width and/or Height of Arrays must be positive!\n");
+  			return;
+  		}
+  		if ((sa->Width > MAX_WIDTH ) || (sa->Height > MAX_HEIGHT)) {
+--- 67,74 ----
+  	do {
+  		sa->Width = tuples[tup].fst;
+  		sa->Height = tuples[tup].snd;
+! 		if (sa->Width < 1 || sa->Height < 1) {
+! 			printf("The Width and Height of Arrays must be at least size 1!\n");
+  			return;
+  		}
+  		if ((sa->Width > MAX_WIDTH ) || (sa->Height > MAX_HEIGHT)) {
