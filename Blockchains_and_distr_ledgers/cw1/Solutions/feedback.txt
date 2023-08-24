@@ -1,0 +1,8 @@
+
+56.00
+/100
+
+
+
+Overall there were some mistakes and omissions in your report - for example your tree in Q1b was incomplete; you got the wrong number of bitcoin users in question 2; and you were using different assumptions in Q3; in Q5, your scheme did not follow the requirements and missed some details; you didn’t describe some variables and functions of the smart contract sufficiently.
+

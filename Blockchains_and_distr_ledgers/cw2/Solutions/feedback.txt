@@ -1,0 +1,8 @@
+
+74.00
+/100
+There were a few issues with your smart contract, mainly in terms of security.
+
+For example, your contract should be able to solve the following problem --- if both players abort, a third party can reset the game after a reasonable time; and the timeout parameter should be set longer. In addition, you did not need to let multiple games run in parallel.
+
+Regarding gas efficiency, you can delete those variables after use, and some steps of your contract can be simplified. Lastly, you could have analyzed your fellow student's contract also in terms of gas fairness.
