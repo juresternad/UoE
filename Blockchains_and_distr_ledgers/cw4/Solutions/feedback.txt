@@ -1,0 +1,5 @@
+
+95.00
+/100
+
+Very nice report! In the offchain enhancement, you could have given more details on how the contract can handle disputes about illegal moves.
